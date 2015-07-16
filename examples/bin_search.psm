@@ -1,0 +1,128 @@
+main:
+	push rBP
+	rBP = rSP
+	rSP -= 16
+	
+	#puts integers on the stack while maintaining 16 byte alignment
+	rSI = rSP #keeps track of bottom of stack
+place_loop:
+	rSP -= 16
+	rAX = in
+	if rAX == -1 goto stop_placing
+	mem[rSP+8] = rAX
+	rSI -= 8
+	rAX = in
+	if rAX == -1 goto stop_placing
+	mem[rSP] = rAX
+	rSI -= 8
+	goto place_loop
+stop_placing:
+	mem[rBP-8] = rSI #stores bottom of array
+	
+#if you assume the array is sorted, this is not necessary
+	rDI = mem[rBP-8]
+	rSI = rBP#rSI is now top of the stack
+	rSI -= 16
+	call sort
+
+user_bin_loop:
+	rAX = in	#guess = input
+	if rAX == -1 goto quit
+	rDI = mem[rBP-8]
+	rSI = rBP
+	rSI -= 24
+	rCX = rAX
+	call bin_search
+	out rAX
+	goto user_bin_loop
+quit:
+	rSP = rBP
+	rBP = pop
+	return
+round_8:
+	rAX = rDI
+	rAX /= 2
+	rAX /= 2
+	rAX /= 2
+	rAX *= 2
+	rAX *= 2
+	rAX *= 2
+	return
+#searches the array between rDI and rSI for rCX 
+bin_search:
+	push rBP
+	rBP = rSP
+	rSP -= 32
+	
+	mem[rBP-8] = rDI
+	mem[rBP-16] = rSI
+	mem[rBP-24] = rCX
+	if rDI > rSI goto search_failed #if (begin <= end)	return false;
+	
+	#mid_ptr = (begin + end) / 2;
+	rDI += rSI
+	rDI /= 2
+	call round_8
+	rBX = rAX
+	
+	rDX = mem[rBX]		#this_val = mem[mid_ptr]
+	rCX = mem[rBP-24]	#rCX = searchval
+	if rCX == rDX goto search_succeded
+	
+	rDI = mem[rBP-8]	#load end
+	rSI = mem[rBP-16]	#load begin
+	if rCX < rDX goto end_assign
+	#else if rCX > rDX
+	rSI = rBX #begin = mid_ptr - 8
+	rSI -= 8
+search_call:
+	call bin_search
+	goto exit
+	
+end_assign:
+	rDI = rBX #end = mid_ptr + 8
+	rDI += 8
+	goto search_call
+	
+search_failed:
+	rAX = 0
+	goto exit
+search_succeded:
+	rAX = 1
+exit:
+	rSP = rBP
+	rBP = pop
+	return
+#takes the bottom and the top pointers of the array 
+#and sorts using them
+sort:
+	push rBP
+	rBP = rSP
+	rSP -= 16
+	
+	#rDI = main pointer = bottom of array
+	#rSI = top of array
+outer_loop:
+	if rDI == rSI goto end_sort
+	rBX = mem[rDI]
+	rAX = rDI
+inner_loop:
+	rAX += 8
+	if rAX == rSI goto end_inner_loop
+	rDX = mem[rAX]
+	if rBX >= rDX goto inner_loop
+	#swaps values	
+	mem[rAX] = rBX
+	
+	mem[rDI] = rDX
+	rBX = mem[rDI]
+	goto inner_loop
+	
+end_inner_loop:
+	rDI += 8
+	goto outer_loop
+	
+end_sort:
+	rSP = rBP
+	rBP = pop
+	return

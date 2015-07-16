@@ -1,0 +1,23 @@
+main:
+	push rBP
+	rBP = rSP
+	rSP -= 16
+	
+	rCX = in	#count = in
+	rAX = 1		#f1 = 1
+	rBX = 1 	#f2 = 1
+loop:
+	if rCX <= 0 goto end 
+	
+	out rAX
+	
+	rDX = rAX	#temp = f1
+	rAX = rBX	#f1 = f2
+	rBX += rDX	#f2 = f2 + temp
+	
+	rCX--
+	goto loop
+end:
+	rSP = rBP
+	rBP = pop
+	return

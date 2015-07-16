@@ -1,0 +1,103 @@
+#rDI * rSI
+positive_product:
+	push rBP
+	rBP = rSP
+	rSP -= 16
+	
+	rBX = rDI	#increaser = input 1
+	rCX = rSI	#count = input2
+	rAX = 0		#output = 0
+	if rCX <= 0 goto end_prod
+prod_loop:
+	#loop count times
+	rCX--
+	rAX += rBX	#output += input
+	if rCX > 0 goto prod_loop
+end_prod:
+	rSP = rBP
+	rBP = pop
+	return
+	
+pos_div:
+	push rBP
+	rBP = rSP 
+	rCX = rDI
+	rDX = rSI
+	rBX = 0
+div_loop:
+	if rCX < rDX goto end_div
+	rCX -= rDX
+	rBX++
+	goto div_loop
+
+end_div:
+	rAX = rBX
+	
+	rSP = rBP
+	rBP = pop
+	return
+	
+factorial:
+	push rBP
+	rBP = rSP
+	rSP -= 16
+	
+	mem[rBP-8] = rDI	#store fact_count
+	mem[rBP-16] = 1 	#output value = 1
+fact_loop:
+	rDX = mem[rBP-8]
+	if rDX <= 0 goto end_fact
+	#output = fact_count * output
+	rDI = rDX
+	rSI = mem[rBP-16]
+	call positive_product
+	mem[rBP-16] = rAX
+	
+	#fact_count--
+	rDX = mem[rBP-8]
+	rDX--
+	mem[rBP-8] = rDX
+	
+	goto fact_loop
+end_fact:
+	rAX = mem[rBP-16]	#puts output value into rAX to return
+	rSP = rBP
+	rBP = pop
+	return
+#n! / (k! * (n-k)!)
+main:
+	push rBP
+	rBP = rSP
+	rSP -= 32
+	
+	rAX = in
+	mem[rBP-8] = rAX	#store n
+	rBX = in
+	mem[rBP-16] = rBX	#store k
+	
+	rDI = mem[rBP-8]
+	call factorial
+	mem[rBP-24]	= rAX	#store n!
+
+	rDI = mem[rBP-16]
+	call factorial
+	mem[rBP-32]	= rAX	#store k!
+	
+	rBX = mem[rBP-16]
+	rDI = mem[rBP-8]
+	rDI -= rBX		#k-n
+	call factorial
+	
+	rDI = rAX
+	rSI = mem[rBP-32] 
+	call positive_product #k! * (k-n)!
+	
+	rDI = mem[rBP-24]
+	rSI = rAX
+	call pos_div
+	
+	out rAX		#output finale result
+	
+	rSP = rBP
+	rBP = pop
+	return

@@ -1,0 +1,75 @@
+Mod:
+	push rBP
+	rBP = rSP 
+	rCX = rDI
+	rDX = rSI
+	rBX = 0
+ModLoop:
+	if rCX < rDX goto KillLoop
+	rCX -= rDX
+	rBX++
+	goto ModLoop
+
+KillLoop:
+	rSP = rBP
+	rBP = pop
+	return
+	
+IsPrime:
+	push rBP
+	rBP = rSP
+	rAX = 32
+	rSP -= rAX
+	mem[rBP-16] = rDI
+	mem[rBP-8] = rDI
+IsPrimeLoop:
+	rAX = mem[rBP-8]
+	rAX--
+	mem[rBP-8] = rAX
+	rDI = mem[rBP-16]
+	rSI = mem[rBP-8]
+	call Mod
+	rBX = 0
+	if rCX != rBX goto IsPrimeLoop
+	
+	rAX = mem[rBP-8]
+	rAX--
+	rSP = rBP
+	rBP = pop
+	return
+main:
+	push rBP
+	rBP = rSP
+	rAX = 32
+	rSP -= rAX
+	rAX = in
+	mem[rBP-8] = rAX
+	rAX = 2
+	mem[rBP-16] = rAX
+	
+PrimeLoop:
+	rAX = mem[rBP-8]
+	rBX = mem[rBP-16]
+	if rBX > rAX goto ExitPrimeLoop
+	
+	rDI = mem[rBP-16]
+	call IsPrime
+	rBX = 0
+	if rAX != rBX goto SkipPrint
+	
+	rDI = mem[rBP-16]
+	out rDI
+
+SkipPrint:
+	rCX = mem[rBP-16]
+	rCX++
+	mem[rBP-16] = rCX
+	
+	goto PrimeLoop
+	
+ExitPrimeLoop:
+	rSP = rBP
+	rBP = pop
+	return
+	
+	

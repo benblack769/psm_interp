@@ -1,0 +1,41 @@
+main:
+	rDI = rIP 	#rIP error
+	rIP = rDI 	#rIP error
+	out rSP		#valid
+	rSP = in	#possibly an error, since x86 cannot handle this
+	rAX = mem[rAx-10] #bad register error
+	rBX = mem[rAX-100000000] #too big of constant error (8 bit)
+	mem[rIP] = rDI #rIP error
+	return rSI		#extra junk error
+	rSI &= mem[rDI]	#no match error
+	mem[rDI] |= rSI	#no match error
+	mem[rDI-12] *= 2 #no match error
+	rDI *= rSI #no match error
+	rDI -= -rDI	#no match error
+	rDI ^= -1231 #valid
+	rDI = - rDI #valid
+	rSI = -rSP #regs must be the same for neg error
+	rIP++ #rIP error
+	rSP-- #valid
+	rCX = rBX[rDI] #extra junk error
+	rCX = -0x8000000000000000 #valid
+	rAX = 0x7fffffffffffffff	#valid
+	rCX = 0x8000000000000000 #too big constant error (64 bit)
+	rAX += 0x7fffffffffffffff #too big constant error (32 bit)
+	if rAX <= 0x7fffffff goto main #valid
+	if -0x80000000 > rSP goto main #valid
+	if 0x7ffffffff == rIP goto main #rIP error
+	if 0x80000000 > rSP goto main #too big constant error (32 bit)
+	
+	goto main #valid
+23bad_lab:#numbers in front of label
+good_lAB213:
+good_lAB213:#ambiguity
+asd{bad:
+	goto 23bad_lab #bad label 
+	goto good_lAB213 #valid
+	goto asd{bad #bad label
+	
+	bad_space_lab:#spacing error
+  rAX = rBX #spacing error
+	

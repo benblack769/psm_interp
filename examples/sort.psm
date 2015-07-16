@@ -1,0 +1,71 @@
+main:
+	push rBP
+	rBP = rSP
+	rSP -= 16
+	
+	#puts integers on the stack while maintaining 16 byte alignment
+	rSI = rSP #keeps track of bottom of stack
+place_loop:
+	rSP -= 16
+	rAX = in
+	if rAX == -1 goto stop_placing
+	mem[rSP+8] = rAX
+	rSI -= 8
+	rAX = in
+	if rAX == -1 goto stop_placing
+	mem[rSP] = rAX
+	rSI -= 8
+	goto place_loop
+stop_placing:
+	mem[rBP-8] = rSI #stores bottom of array
+	
+	rDI = mem[rBP-8]
+	rSI = rBP#rSI is now top of the stack
+	rSI -= 16
+	call sort
+	
+	rDI = mem[rBP-8]
+	rSI = rBP
+	rSI -= 16
+print_loop:
+	rAX = mem[rDI]
+	out rAX
+	rDI += 8
+	if rDI != rSI goto print_loop
+	
+	rSP = rBP
+	rBP = pop
+	return
+#takes the bottom and the top pointers of the array 
+#and sorts using them
+sort:
+	push rBP
+	rBP = rSP
+	rSP -= 16
+	
+	#rDI = main pointer = bottom of array
+	#rSI = top of array
+outer_loop:
+	if rDI == rSI goto end_sort
+	rBX = mem[rDI]
+	rAX = rDI
+inner_loop:
+	rAX += 8
+	if rAX == rSI goto end_inner_loop
+	rDX = mem[rAX]
+	if rBX >= rDX goto inner_loop
+	#swaps values	
+	mem[rAX] = rBX
+	
+	mem[rDI] = rDX
+	rBX = mem[rDI]
+	goto inner_loop
+	
+end_inner_loop:
+	rDI += 8
+	goto outer_loop
+	
+end_sort:
+	rSP = rBP
+	rBP = pop
+	return

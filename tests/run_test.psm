@@ -1,0 +1,104 @@
+main:
+	push rBP
+	rBP = rSP
+	rAX = in
+	if rAX == 1 goto test1
+	if rAX == 2 goto test2
+	if rAX == 3 goto test3
+	if rAX == 4 goto test4
+	if rAX == 5 goto test5
+	if rAX == 6 goto test6
+	if rAX == 7 goto test7
+	
+	
+test1:
+	call fn
+	return
+fn:
+	rAX = mem[rSP] #valid even though it is accessing rIP's value
+	rAX += 10	#warning rIP val is being accessed
+	mem[rSP] = rAX 
+	return #error
+	
+	
+test2:
+	if rAX == rSP goto test2 #warning, not frome same source
+	if rCX == rBP goto test2 #warning, not frome same source
+	rBP = pop
+	return
+	
+	
+test3:
+	#loop warnings are supressed
+	rAX = 50 
+	call test3_loop
+	rBP = pop
+	return
+test3_loop:
+	# the three warnings should only appear once
+	rSI = mem[rSP] #no warning
+	rDI += rSI #warning, accessing rIP val
+	rBX = mem[rSP-48] 
+	rCX += rBX #warning, accessing unknown val
+	if rAX == rBX goto test3 #warning, different sources
+	rAX--
+	if rAX != 0 goto test3_loop
+	#this warning should appear again
+	if rAX == rBX goto test3 
+	return
+	
+	
+test4:
+	#val propogation 
+	rAX = rSP
+	rCX = -8
+	rAX += rCX #no warning
+	rBX = -5
+	rBX += -3
+	rAX += rBX #warning, non constant value added to stack pointer
+	rDI = mem[rAX] # no warning
+	rAX += rDI  #warning, unknown val accessed
+	rSI = mem[rAX] #error
+	rBP = pop
+	return
+	
+	
+test5:
+	#bad recursion, instruction interfeerence
+	rBX = 10
+	call recfn
+	rBP = pop
+	return
+recfn:
+	push rBP
+	rBP = rSP
+	rSP -= 8
+	push rBX
+	rBX--
+	if rBX == 0 goto rec_end
+	call recfn
+rec_end:
+	rBP = pop
+	return
+	
+	
+test6:
+	#memory mistakes
+	push rAX
+	rBX = 12
+	push rBX 
+	rCX = 0
+	push rCX
+me_mist_loop:
+	rCX = mem[rSP-8]
+	rCX++
+	mem[rSP-8] = rCX
+	rBX = mem[rSP-16]
+	if rCX == rBX goto me_mist_loop
+	rBP = pop
+	return
+	
+	
+test7:
+	rBP = pop
+	return

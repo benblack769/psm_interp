@@ -1,0 +1,150 @@
+#recursion test
+callfn:
+	push rBP
+	rBP = rSP
+	rCX = 0
+	if rDI == rCX goto EndRec
+	rDI--
+	call callfn
+EndRec:
+	rCX = 999
+	out rCX
+	rSP = rBP
+	rBP = pop
+	return
+	rAX = 666
+	out rAX #this line should never be called
+pushsucceed:
+	goto resume
+pushfail:
+	out rAX
+	return
+main:
+	push rBP
+	rBP = rSP
+	rSP -= 32
+#in test
+	rAX = in
+	rBX = in
+	rCX = in
+	out rAX
+	out rBX
+	out rCX
+#push pop tests
+	rBX = 10
+	rAX = 9
+	push rAX
+	rCX = mem[rSP]
+	rCX++
+	mem[rSP] = rCX
+	rAX = pop
+	if rBX == rAX goto pushsucceed
+	if rBX != rAX goto pushfail
+resume:
+#not and negation tests
+	rCX = 5
+	rCX = -rCX
+	out rCX
+	rDI = rCX
+	rDI = -rDI
+	rCX = ~rCX
+	out rCX
+	rSI = rCX
+	rAX = 1
+	rDI -= rAX
+	if rSI < rDI goto twiddlefail
+	if rSI > rDI goto twiddlefail
+	if rSI == rDI goto twiddlesucceed
+twiddlefail:
+	out rDI
+	out rSI
+	rSP = rBP
+	rBP = pop
+	return
+twiddlesucceed:
+#bit twiddling test continued
+	rAX = 63
+	rBX = 100
+	rDI = 99
+	rCX = rAX
+	rCX &= rBX
+	rDX = rAX
+	rDX ^= rBX
+	rSI = rAX
+	rSI |= rBX
+	out rCX
+	out rSI
+	out rDX
+	out rAX
+	out rBX
+	out rDI
+#looping and increment test
+	rAX = 1
+	rBX = 2
+	rAX++
+	if rAX <= rBX goto incNext
+	if rAX > rBX goto incFail
+incNext:
+	rAX = 50
+incLoop:
+	rAX--
+	if rAX >= rBX goto incLoop
+	goto incContinue
+incFail:
+	out rBX
+	out rAX
+	return
+incContinue:
+#2 tests
+	rAX = 5
+	rAX *= 2
+	out rAX
+	rAX = 5
+	rAX /= 2
+	out rAX
+	rAX = 5
+	rAX %= 2
+	out rAX
+#memory access/offset test
+	rBX = 21
+	mem[rSP] = rBX
+	rAX = rSP
+	rDX = -64
+	rAX += rDX
+	mem[rAX-8] = rBX
+	rAX++
+	rAX = mem[rAX-9]
+	out rAX
+	rAX = mem[rSP]
+	out rAX
+#starts recursion test
+	rDI = 10
+	call callfn
+	rAX = 888
+	out rAX
+#big numbers test
+	rAX = 0x7fffffffffffffff
+	out rAX
+	rBX = 5
+	rCX = rAX
+	rCX += rBX
+	out rCX
+	rCX = -0x8000000000000000
+	out rCX
+	rCX -= rAX
+	out rCX
+	rCX += rAX
+	out rCX
+	rCX -= rBX 
+	out rCX
+#constant tests
+	rAX = 5
+	rAX -= -5
+	rAX ^= 12
+	rAX += -12
+	rAX += -0
+	out rAX
+	rSP += 32
+	rSP = rBP
+	rBP = pop
+	return

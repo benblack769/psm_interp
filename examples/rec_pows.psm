@@ -1,0 +1,71 @@
+#computes (input 1) ^ (input 2)
+main:
+	push rBP
+	rBP = rSP
+	rSP -= 16
+	
+	rDI = in
+	rSI = in
+	
+	call power
+	
+	out rAX
+	
+	rSP = rBP
+	rBP = pop
+	return
+#rDI * rSI
+positive_product:
+	push rBP
+	rBP = rSP
+	rSP -= 16
+	
+	rBX = rDI	#increaser = input 1
+	rCX = rSI	#count = input2
+	rAX = 0		#output = 0
+	if rCX <= 0 goto end_prod
+prod_loop:
+	#loop count times
+	rCX--
+	rAX += rBX	#output += input
+	if rCX > 0 goto prod_loop
+end_prod:
+	rSP = rBP
+	rBP = pop
+	return
+	
+#rDI ^ rSI
+power:
+	push rBP
+	rBP = rSP
+	rSP -= 16
+	
+	mem[rBP-8] = rDI
+	mem[rBP-16] = rSI
+	
+	if rSI == 0 goto zero_case
+	rBX = rSI
+	rBX %= 2
+	if rBX == 1 goto odd_case
+#even_case
+	rSI /= 2
+	call power
+	rDI = rAX
+	rSI = rAX
+	call positive_product
+	goto exit_pow
+odd_case:
+	#rAX = power(x , (n-1))
+	rSI -= 1
+	call power
+	#rAX = x * pow_result
+	rDI = mem[rBP-8]
+	rSI = rAX
+	call positive_product
+	goto exit_pow
+zero_case:
+	rAX = 1
+exit_pow:
+	rSP = rBP
+	rBP = pop
+	return

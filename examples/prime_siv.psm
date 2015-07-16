@@ -1,0 +1,42 @@
+main:
+	push rBP
+	rBP = rSP
+	rSP -= 16
+	#gets cap to generate primes up to
+	rAX = in
+	mem[rBP-8] = rAX
+	if rAX <= 1 goto exit
+#fill the stack up with 1s
+	mem[rSP] = 1
+	rAX--
+initloop:
+	push 1
+	rAX--
+	if rAX >= 0 goto initloop
+	
+	rBX = 2
+	#note that the first 16 bytes after rBP are reserved, and will not be used by this
+	rCX = 16
+mainloop:
+	rSI = rBP
+	rSI -= rCX
+	rDX = mem[rSI]
+	if rDX == 0 goto skip
+	
+	#we know rBX has hit a prime if mem[rSI] == 1
+	out rBX
+	#we also know that any multiples of rBX(rCX / 8) are composite
+elim_composites:
+	rSI -= rCX
+	if rSI < rSP goto skip
+	mem[rSI] = 0
+	goto elim_composites
+skip:
+	rCX += 8
+	rBX++
+	rAX = mem[rBP-8]
+	if rBX <= rAX goto mainloop
+exit:
+	rSP = rBP
+	rBP = pop
+	return

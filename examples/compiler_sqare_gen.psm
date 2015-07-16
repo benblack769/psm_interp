@@ -1,0 +1,37 @@
+#rAX = rDI * rDI
+#assumes that rDI > 0
+sqare:
+	push rBP
+	rBP = rSP
+	push rCX	#saves rCX,rSP -= 8
+	rSP -= 8
+	
+	rCX = rDI	#count = input
+	rAX = 0		#output = 0
+sq_loop:
+	#loop count times
+	rCX--
+	rAX += rDI	#output += input
+	if rCX > 0 goto sq_loop
+	
+	rSP += 8
+	pop rCX		#restores rCX
+	pop rBP
+	return
+	
+main:
+	push rBP
+	rBP = rSP
+	rSP -= 16
+	
+	rDI = in	#sqarenum = in
+	if rDI <= 0 goto end
+mainloop:
+	call sqare
+	out rAX
+	rDI--
+	if rDI > 0 goto mainloop
+end:
+	rSP += 16
+	pop rBP
+	return

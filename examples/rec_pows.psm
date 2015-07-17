@@ -20,7 +20,7 @@ positive_product:
 	rBP = rSP
 	rSP -= 16
 	
-	rBX = rDI	#increaser = input 1
+	rBX = rDI	#increaser = input  1
 	rCX = rSI	#count = input2
 	rAX = 0		#output = 0
 	if rCX <= 0 goto end_prod

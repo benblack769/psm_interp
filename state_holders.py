@@ -64,14 +64,19 @@ class Memory(object):
     rSP is in terms of bytes, and is at an offset of start_loc, so it 
     must be converted to its real locaion in the data list.
     '''
-    def __init__(self):
+    def __init__(self,rSP):
         self.max_size = 500
+        self.rSP = rSP
         self.start_loc = make_rSP()
         self.data = [DataSegment() for n in range(self.max_size)]
         
+    def check_16byte_stack_alignment(self):
+        if (self.rSP.val.int+8 - self.start_loc) % 16 != 0:
+            instruc_warnings.add("rSP must be a multiple of 16 from its starting value at times of calls, rands, inputs and outputs on OS X")
+                
     def in_bounds(self,n):
         return n > self.start_loc - self.max_size * 8 and n <= self.start_loc and n % 8 == 0
-        
+    
     def get(self,loc_ptr):
         if self.in_bounds(loc_ptr.int):
             return self.data[self.ref_to_data(loc_ptr.int)].get()

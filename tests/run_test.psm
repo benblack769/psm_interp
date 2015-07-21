@@ -100,5 +100,15 @@ me_mist_loop:
 	
 	
 test7:
+	#memory misalignment
+	push rAX 
+	rAX = mem[rSP]
+	out rAX
+	rBX = in
+	call misalign_fn
+	
 	rBP = pop
+	return
+	
+misalign_fn:
 	return

@@ -1,0 +1,49 @@
+fib:
+	push rBP
+	rBP = rSP
+	rSP -= 16
+	
+	if rDI == 0 goto zero_case
+	if rDI == 1 goto one_case
+#else 
+	mem[rBP-8] = rDI
+	
+	rDI -= 1
+	call fib
+	mem[rBP-16] = rAX
+	
+	rDI = mem[rBP-8]
+	rDI -= 2
+	call fib
+	
+	rBX = mem[rBP-16]
+	rAX += rBX
+	
+	goto end_fib
+	
+zero_case:
+	rAX = 0
+	goto end_fib
+	
+one_case:
+	rAX = 1
+	
+end_fib:	
+	rSP = rBP
+	rBP = pop
+	return
+	
+main:
+	push rBP
+	rBP = rSP
+	rSP -= 16
+	
+	rDI = in	#count = in
+	
+	call fib
+	
+	out rAX
+	
+	rSP = rBP
+	rBP = pop
+	return

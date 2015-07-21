@@ -5,6 +5,9 @@ main:
 	
 	#puts integers on the stack while maintaining 16 byte alignment
 	rSI = rSP #keeps track of bottom of stack
+	
+	rCX = in	#size of array
+	
 place_loop:
 	rSP -= 16
 	rAX = in

@@ -39,15 +39,7 @@ quit:
 	rSP = rBP
 	rBP = pop
 	return
-round_8:
-	rAX = rDI
-	rAX /= 2
-	rAX /= 2
-	rAX /= 2
-	rAX *= 2
-	rAX *= 2
-	rAX *= 2
-	return
+	
 #searches the array between rDI and rSI for rCX 
 bin_search:
 	push rBP
@@ -61,9 +53,12 @@ bin_search:
 	
 	#mid_ptr = (begin + end) / 2;
 	rDI += rSI
-	rDI /= 2
-	call round_8
-	rBX = rAX
+	rDI >>= 1	#mid_ptr //= 2
+	
+	rDI >>= 3
+	rDI <<= 3 	#rounds mid_ptr to the nearest 8
+	
+	rBX = rDI
 	
 	rDX = mem[rBX]		#this_val = mem[mid_ptr]
 	rCX = mem[rBP-24]	#rCX = searchval

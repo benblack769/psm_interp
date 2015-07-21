@@ -6,6 +6,7 @@ main:
 	rAX = in
 	mem[rBP-8] = rAX
 	if rAX <= 1 goto exit
+	
 #fill the stack up with 1s
 	mem[rSP] = 1
 	rAX--

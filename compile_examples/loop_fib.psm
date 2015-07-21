@@ -1,0 +1,35 @@
+main:
+	push rBP
+	rBP = rSP
+	rSP -= 32
+	
+	rAX = in	#count = in
+	mem[rBP-8] = rAX
+	mem[rBP-16] = 1		#f1 = 1
+	mem[rBP-24] = 1 	#f2 = 1
+loop:
+	rAX = mem[rBP-8]
+	if rAX <= 0 goto end 
+	
+	rAX = mem[rBP-16]
+	out rAX
+	
+	rAX = mem[rBP-16]	
+	mem[rBP-32] = rAX	#temp = f1
+	
+	rAX = mem[rBP-24]	
+	mem[rBP-16] = rAX	#f1 = f2
+	
+	rAX = mem[rBP-24]
+	rBX = mem[rBP-32]
+	rAX += rBX
+	mem[rBP-24] = rAX	#f2 = f2 + temp
+	
+	rAX = mem[rBP-8]
+	rAX--
+	mem[rBP-8] = rAX
+	goto loop
+end:
+	rSP = rBP
+	rBP = pop
+	return

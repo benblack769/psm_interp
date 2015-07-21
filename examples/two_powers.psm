@@ -1,0 +1,19 @@
+	
+main:
+	push rBP
+	rBP = rSP
+	rSP -= 32
+	rDI = in
+	rBX = 2		#store two_pow
+	
+pow_loop:
+	if rBX > rDI goto exit
+	out rBX
+	rBX <<= 1
+	goto pow_loop
+	
+exit:
+	rSP = rBP
+	rBP = pop
+	return
+	

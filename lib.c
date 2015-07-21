@@ -1,5 +1,6 @@
 //lib.c
 #include <stdio.h>
+#include <time.h>
 #include <stdlib.h>
 void print_help(long long f){
 	printf("%lld\n",f);
@@ -31,7 +32,7 @@ long long input_help(){
   scanf("%lld",&value);	
   return value;
 }
-void input(){ 	
+void input(){
 	asm (			
 	"pushq %%rbx\n\
 	pushq %%rcx\n\
@@ -50,30 +51,21 @@ void input(){
 	popq %%rbx" : : [value] "r" (value): "rsp");
 }
 void random(){
-	long long r = rand();
-	asm ("movq %[r],%%rax" : : [r] "r" (r):);
+	asm(
+	"pushq %%rbx\n\
+	pushq %%rcx\n\
+	pushq %%rdx\n\
+	pushq %%rsi\n\
+	pushq %%rdi\n\
+	subq  $40,%%rsp" : : : "rsp");
+	srand(clock()+rand());
+	long long rand_num = rand();
+	asm(
+	"movq %[rand_num],%%rax\n\
+	addq  $40,%%rsp\n\
+	popq %%rdi \n\
+	popq %%rsi \n\
+	popq %%rdx\n\
+	popq %%rcx\n\
+	popq %%rbx" : : [rand_num] "r" (rand_num): "rsp");
 }
-//(rDI * rSI)
-asm ("prod:");
-asm ("movq %rDI,%rAX");
-asm ("imulq %rSI,%rSI");
-asm ("ret");
-
-//(rDI / rSI)
-asm ("quot:");
-asm ("push %rDX");
-asm ("movq %rDI,%rAX");
-asm ("movq $0,%rDX");
-asm ("idivq %rSI");
-asm ("pop %rDX");
-asm ("ret");
-
-//(rDI % rSI)
-asm ("mod:");
-asm ("push %rDX");
-asm ("movq %rDI,%rAX");
-asm ("movq $0,%rDX");
-asm ("idivq %rSI");
-asm ("movq %rDI,%rAX");
-asm ("pop %rDX");
-asm ("ret");

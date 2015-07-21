@@ -35,7 +35,7 @@ print:
 	.seh_stackalloc	48
 	.seh_endprologue
 /APP
- # 9 "../lib.c" 1
+ # 10 "lib.c" 1
 	pushq %rax
 	pushq %rbx
 	pushq %rcx
@@ -51,7 +51,7 @@ print:
 	movq	%rax, %rcx
 	call	print_help
 /APP
- # 19 "../lib.c" 1
+ # 20 "lib.c" 1
 	addq $32,%rsp 
 	popq %rdi 
 	popq %rsi 
@@ -106,7 +106,7 @@ input:
 	.seh_stackalloc	48
 	.seh_endprologue
 /APP
- # 35 "../lib.c" 1
+ # 36 "lib.c" 1
 	pushq %rbx
 	pushq %rcx
 	pushq %rdx
@@ -119,7 +119,7 @@ input:
 	movq	%rax, -8(%rbp)
 	movq	-8(%rbp), %rax
 /APP
- # 43 "../lib.c" 1
+ # 44 "lib.c" 1
 	movq %rax,%rax
 	addq  $40,%rsp
 	popq %rdi 
@@ -140,46 +140,53 @@ input:
 random:
 	pushq	%rbp
 	.seh_pushreg	%rbp
-	movq	%rsp, %rbp
-	.seh_setframe	%rbp, 0
-	subq	$48, %rsp
-	.seh_stackalloc	48
+	pushq	%rbx
+	.seh_pushreg	%rbx
+	subq	$56, %rsp
+	.seh_stackalloc	56
+	leaq	128(%rsp), %rbp
+	.seh_setframe	%rbp, 128
 	.seh_endprologue
+/APP
+ # 54 "lib.c" 1
+	pushq %rbx
+	pushq %rcx
+	pushq %rdx
+	pushq %rsi
+	pushq %rdi
+	subq  $40,%rsp
+ # 0 "" 2
+/NO_APP
+	call	clock
+	movl	%eax, %ebx
+	call	rand
+	addl	%ebx, %eax
+	movl	%eax, %ecx
+	call	srand
 	call	rand
 	cltq
-	movq	%rax, -8(%rbp)
-	movq	-8(%rbp), %rax
+	movq	%rax, -88(%rbp)
+	movq	-88(%rbp), %rax
 /APP
- # 54 "../lib.c" 1
+ # 63 "lib.c" 1
 	movq %rax,%rax
+	addq  $40,%rsp
+	popq %rdi 
+	popq %rsi 
+	popq %rdx
+	popq %rcx
+	popq %rbx
  # 0 "" 2
 /NO_APP
 	nop
-	addq	$48, %rsp
+	addq	$56, %rsp
+	popq	%rbx
 	popq	%rbp
 	ret
 	.seh_endproc
-/APP
-	prod:
-	movq %rDI,%rAX
-	imulq %rSI,%rSI
-	ret
-	quot:
-	push %rDX
-	movq %rDI,%rAX
-	movq $0,%rDX
-	idivq %rSI
-	pop %rDX
-	ret
-	mod:
-	push %rDX
-	movq %rDI,%rAX
-	movq $0,%rDX
-	idivq %rSI
-	movq %rDI,%rAX
-	pop %rDX
-	ret
 	.ident	"GCC: (x86_64-win32-seh-rev0, Built by MinGW-W64 project) 5.1.0"
 	.def	printf;	.scl	2;	.type	32;	.endef
 	.def	scanf;	.scl	2;	.type	32;	.endef
+	.def	clock;	.scl	2;	.type	32;	.endef
 	.def	rand;	.scl	2;	.type	32;	.endef
+	.def	srand;	.scl	2;	.type	32;	.endef

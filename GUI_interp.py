@@ -295,11 +295,13 @@ class TextGraphic(object):
             #moves the center of the veiw to the current instruction
             move_loc = rIP.val.int - start_rIP
             line_size = self.lines[0].arr_frame.winfo_height() 
-            place_spot = move_loc * line_size - self.body.winfo_height() / 2
+            box_height = self.body.winfo_height()
+            place_spot = move_loc * line_size - box_height / 2
             totsize = len(self.lines) * line_size
             fraction = place_spot / totsize
             
-            self.body.scroll_canvas.yview("moveto",fraction)
+            if box_height < totsize:
+                self.body.scroll_canvas.yview("moveto",fraction)
             
     def highlight_label(self,line_num):
         self.lines[line_num - start_rIP].highlight_label()
@@ -464,8 +466,8 @@ class GUI_MemLine(DataSegment):
             return DataSegment.get(self)
         
 class GUI_Memory(Memory):
-    def __init__(self,Master,HexVar,is_follow_mode):
-        Memory.__init__(self)
+    def __init__(self,rSP,Master,HexVar,is_follow_mode):
+        Memory.__init__(self,rSP)
         
         self.data_frame = VerticalScrolledFrame(Master,relief=GROOVE,bd=2)
         self.data = [GUI_MemLine(self.data_frame.interior,hex((self.start_loc - n * 8) & 0xffff)[2:],HexVar) for n in range(self.max_size)]
@@ -724,12 +726,12 @@ class GUI_Controller(object):
         center_on_instruc_var = IntVar(self.root)
         
         self.mem_reg_frame = Frame(self.root)
-        self.mem_g = GUI_Memory(self.mem_reg_frame,self.IsHexVar,center_on_instruc_var)
         self.reg_g = RegisterGraphics(self.mem_reg_frame,self.IsHexVar)
+        regs = self.registers()
+        self.mem_g = GUI_Memory(regs["rSP"],self.mem_reg_frame,self.IsHexVar,center_on_instruc_var)
         
         self.inter_frame = Frame(self.root)
         
-        regs = self.registers()
         self.state = GUI_State(self.inter_frame,self,regs["rBP"],regs["rIP"])
         self.cons_g = ConsoleGraphic(self.inter_frame)
         self.label_locs,exprs,to_fnum = psm_parser.parse_all(flines,regs,self.state,self.cons_g,self.mem_g)

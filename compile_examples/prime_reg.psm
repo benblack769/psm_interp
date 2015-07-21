@@ -1,0 +1,61 @@
+IsNotPrime:
+	push rBP
+	rBP = rSP
+	rSP -= 32
+	
+	#assumes input > 1
+	rAX = mem[rBP+16]
+	mem[rBP-8] = rAX	#factor = input
+IsNotPrimeLoop:
+	rAX = mem[rBP-8]
+	rAX--
+	mem[rBP-8] = rAX	#factor--
+	
+	rAX = mem[rBP+16]
+	rBX = mem[rBP-8]
+	rAX %= rBX			
+	if rAX != 0 goto IsNotPrimeLoop	#while (check_num % factor) 
+	
+#end of IsNotPrimeLoop
+	rAX = mem[rBP-8]
+	rAX--		#if factor is 1 then it is prime and rAX will be zero
+	rSP = rBP
+	rBP = pop
+	return
+main:
+	push rBP
+	rBP = rSP
+	rSP -= 32
+	
+	rAX = in
+	mem[rBP-8] = rAX	#store max_num
+	mem[rBP-16] = 2		#store check_num
+	
+PrimeLoop:
+	rAX = mem[rBP-8]	
+	rBX = mem[rBP-16]	 
+	if rBX > rAX goto ExitPrimeLoop
+	
+	rSP -= 8
+	rAX = mem[rBP-16]	
+	push rAX
+	call IsNotPrime
+	rSP += 16			
+	if rAX != 0 goto SkipPrint #if not (IsNotPrime(check_num)) print(check_num)
+	
+	rAX = mem[rBP-16]
+	out rAX
+
+SkipPrint:
+	rAX = mem[rBP-16]	#check_num++
+	rAX++
+	mem[rBP-16] = rAX
+	
+	goto PrimeLoop
+	
+ExitPrimeLoop:
+	rSP = rBP
+	rBP = pop
+	return
+	
+	

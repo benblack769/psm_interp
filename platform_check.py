@@ -9,3 +9,9 @@ def is_linux():
     return SYS_NAME == "linux" or SYS_NAME == "linux2"
 def is_unix():
     return not is_windows()
+"""Note that "gcc" on macs is not actually gcc but clang(with LLVM).
+If you are using the actual gcc on your mac, or clang on a different
+OS then you should change this.
+"""
+def is_gcc():
+    return not is_mac()

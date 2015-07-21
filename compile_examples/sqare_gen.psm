@@ -1,0 +1,27 @@
+main:
+	push rBP
+	rBP = rSP
+	rSP -= 16
+	
+	rAX = in	
+	mem[rBP-8] = rAX	#maxnum = in
+	mem[rBP-16] = 1 	#sqarenum = 1
+mainloop:
+	rAX = mem[rBP-8]
+	rBX = mem[rBP-16]
+	if rAX < rBX goto end	#if maxnum < sqarenum
+	
+	rAX = mem[rBP-16]
+	rBX = mem[rBP-16]
+	rAX *= rBX	#rAX = sqarenum ^ 2
+	
+	out rAX		#out squared value
+	
+	rBX = mem[rBP-16]
+	rBX++		#sqarenum++
+	mem[rBP-16] = rBX
+	goto mainloop
+end:
+	rSP = rBP
+	rBP = pop
+	return

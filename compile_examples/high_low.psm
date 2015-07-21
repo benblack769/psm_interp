@@ -1,0 +1,33 @@
+main:
+	push rBP
+	rBP = rSP
+	rSP -= 16
+	
+	rAX = rand		#correct = rand
+	mem[rBP-8] = rAX
+guess_loop:
+	rAX = in		#guess = in
+	mem[rBP-16] = rAX
+	
+	rAX = mem[rBP-8]
+	rBX = mem[rBP-16]
+	if rAX == rBX goto is_correct
+	
+	rAX = mem[rBP-8]
+	rBX = mem[rBP-16]
+	if rAX > rBX goto is_low
+	
+#is_high
+	out 1
+	goto guess_loop
+	
+is_low:
+	out -1
+	goto guess_loop
+	
+is_correct:
+	out 0
+	
+	rSP = rBP
+	rBP = pop
+	return

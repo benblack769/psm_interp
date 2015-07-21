@@ -1,6 +1,7 @@
 COMMANDS:
 	INTERPRETING .psm:
 		PATTERN: python3.4 [interpreter/compiler] [filename.psm]
+		
 		INTERPRETERS/COMPILERS:
 			GUI_interp.py 
 				Brings up a GUI that displays errors and warnings
@@ -35,13 +36,14 @@ FILES:
 
 LANGUAGE:
 
-	GUIDE TO MATH 221 PSEUDO-ASSEMBLY 
-
 	Registers: rAX, rBX, rCX, rDX, rSI, rDI, rBP, rSP
-
+	
+	These are all 64 bit registers, which means that any overflow will be truncated.
+	
 	In the below rS means source and rD means destination
 	rS can be a register or a constant, rD can only be a register
-
+	constants which can fit into 32 bits except for register assignment which 
+	allows for 64 bit constants.
 
 	Instructions:
 		All instructions must have exactly 4 spaces or a tab
@@ -52,8 +54,9 @@ LANGUAGE:
 
 		out rS          "output"
 		rD = in         "input"
+		rD = rand       "generate random number"
 
-		rD = rS         "register-register move"
+		rD = rS         "assignment"
 		rD = -rD        "negate"
 		rD = ~rD        "invert"
 		rD += rS        "add accumulate"
@@ -63,9 +66,13 @@ LANGUAGE:
 		rD ^= rS        "xor ..."
 		rD ++           "increment"
 		rD --           "decrement"
-		rD *= 2			"arithmetic shift left 1"
-		rD /= 2			"arithmetic shift right 1"
-		rD %= 2         "and accumulate with x0001"
+		rD *= rS		"integer multiply"
+		rD /= rS		"integer divide"
+		rD %= rS        "integer modulus"
+		
+		c has to a constant less than 64
+		rD >>= c		"shift arthmatic right"
+		rD <<= c		"shift arthmatic left"
 
 		mem[rD] = rS   "register-to-memory store"
 		rD = mem[rD]   "memory-to-register load"

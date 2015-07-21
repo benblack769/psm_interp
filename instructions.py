@@ -1,16 +1,20 @@
 from run_core import *
 from state_holders import *
 import operator
+import math
+import platform_check
+import random
 #
 #x86 maker helpers
 #
 def make_x86(inst,Str1 = None,Str2 = None):
-    x86_str = "\t" + inst
+    x86_str = "    " + inst
     if Str1 != None:
-        x86_str += "  \t" + Str1 
+        x86_str += " " * (12 - len(x86_str)) + Str1 #makes sure everything lines up
     if Str2 != None:
         x86_str += "," + Str2
     
+    x86_str += " " * (38 - len(x86_str))
     return x86_str
     
 def make_value(reg):
@@ -26,11 +30,47 @@ def make_offset(reg,off=Const(0)):
 def make_lit(lit):
     return "$"+str(lit)
     
+def make_div(src,dest,return_mod):
+    #x86 implementation for Div and Rem
+    is_rax = dest.make_x86() == "%rAX"
+    is_rdx = dest.make_x86() == "%rDX"
+    
+    this_str = ""
+    if not is_rax:
+        this_str += make_x86("pushq","%rAX") + "\n"
+    if not is_rdx:
+        this_str += make_x86("pushq","%rDX") + "\n"
+        
+    divisor = make_value(src)
+    if divisor == "%rAX" or divisor == "%rDX" or type(src) == Const:
+        this_str += make_x86("movq",make_value(src),"%r8") + "\n"
+        divisor = "%r8"
+    
+    this_str += make_x86("movq",make_value(dest),"%rAX") + "\n"
+        
+    this_str += make_x86("movq","$0","%rDX") + "\n"
+    this_str += make_x86("cqto") + "\n"
+    this_str += make_x86("idivq",divisor) + "\n"
+    out_reg = "%rDX" if return_mod else "%rAX"
+    
+    this_str += make_x86("movq",out_reg,make_value(dest))
+    
+    if not is_rdx:
+        this_str += "\n" + make_x86("popq","%rDX")
+    if not is_rax:
+        this_str += "\n" + make_x86("popq","%rAX")
+    
+    return this_str
 #
 #psm runtime helpers
 #
     
 def eval_expr(oper,first,second=None):
+    """
+    Evaluates the expression using the passed in oper function, 
+    then truncates the result into 64 bits, then 
+    
+    """
     first_ty = type(first)
     if second == None:
         second_ty = int_val
@@ -115,6 +155,31 @@ class Sub(Double):
         self.eval_with(operator.sub)
     def to_x86(self):
         return self.doub_to_x86("subq")
+class SAL(Double):
+    def eval(self):
+        self.eval_with(operator.lshift)
+    def to_x86(self):
+        return self.doub_to_x86("salq")
+class SAR(Double):
+    def eval(self):
+        self.eval_with(operator.rshift)
+    def to_x86(self):
+        return self.doub_to_x86("sarq")
+class Rem(Double):
+    def eval(self):
+        self.eval_with(lambda dest,src: int(math.copysign(abs(dest) % abs(src),dest)))
+    def to_x86(self):
+        return make_div(self.src,self.dest,True)
+class Div(Double):
+    def eval(self):
+        self.eval_with(lambda dest,src: int(math.copysign(abs(dest) / abs(src),dest * src)))#integer division
+    def to_x86(self):
+        return make_div(self.src,self.dest,False)
+class Mul(Double):
+    def eval(self):
+        self.eval_with(operator.mul)
+    def to_x86(self):
+        return self.doub_to_x86("imulq")
 class And(Double):
     def eval(self):
         self.eval_with(operator.and_)
@@ -168,21 +233,6 @@ class Not(Single):
         self.eval_with(operator.invert)
     def to_x86(self):
         return self.sing_to_x86("notq")
-class SAL(Single):
-    def eval(self):
-        self.eval_with(lambda dest:dest << 1)
-    def to_x86(self):
-        return make_x86("salq","$1",make_value(self.dest))
-class SAR(Single):
-    def eval(self):
-        self.eval_with(lambda dest:dest >> 1)
-    def to_x86(self):
-        return make_x86("sarq","$1",make_value(self.dest))
-class And1(Single):
-    def eval(self):
-        self.eval_with(lambda dest:dest & 1)
-    def to_x86(self):
-        return make_x86("andq","$1",make_value(self.dest))
 #MemStore and MemLoad's version without the offset is the same as when the offset is zero
 class MemStore(object):
     def __init__(self,in_source,Stack,mem_loc,mem_off=Const(0)):
@@ -240,10 +290,6 @@ class Cond_jump(object):
         
         part2 = make_x86(op_dict[self.op],self.label)
         return part1 + "\n" + part2
-def check_16byte_stack_alignment(Stack,rSP):
-    #if (rSP.int.val - Stack.start_loc) % 16 != 0:
-    #    instruc_warnings.add("rSP must be a multiple of 16 from its starting value at times of calls, inputs and outputs on OS X")
-    return
     
 class Call(object):
     def __init__(self,in_label,in_loc,call_loc,rSP,Stack,State):
@@ -255,7 +301,7 @@ class Call(object):
         self.PState = State
         self.Stack = Stack
     def eval(self):
-        check_16byte_stack_alignment(self.Stack,self.rSP)
+        self.Stack.check_16byte_stack_alignment()
         new_val = eval_expr(operator.sub,self.rSP.get(),int_val(8))
         self.Stack.set(new_val,self.ret_loc)
         self.rSP.set(new_val)
@@ -279,38 +325,67 @@ class Return(object):
         return make_x86("retq")
 
 class Output(object):
-    def __init__(self,src,Console):
+    def __init__(self,src,Console,Stack):
         self.src = src
         self.Cons = Console
+        self.Stack = Stack
     def eval(self):
+        self.Stack.check_16byte_stack_alignment()
         self.Cons.print_val(self.src.get())
     def to_x86(self):
         return make_x86("pushq","%rDI") + "\n" + \
+            make_x86("subq","$8","%rSP") + "\n" + \
             make_x86("movq",make_value(self.src),"%rDI") + "\n" + \
-            ((make_x86("addq","$8","%rDI")  + "\n") if (self.src.name == "rSP") else "") + \
-            make_x86("callq","print") + "\n" + \
+            ((make_x86("addq","$16","%rDI")  + "\n") if (self.src.name == "rSP") else "") + \
+            make_x86("callq",("print" if platform_check.is_gcc() else "_print")) + "\n" + \
+            make_x86("addq","$8","%rSP") + "\n" + \
             make_x86("popq","%rDI")
         
 class Input(object):
-    def __init__(self,dest,Console):
+    def __init__(self,dest,Console,Stack):
         self.dest = dest
         self.Cons = Console
+        self.Stack = Stack
     def eval(self):
+        self.Stack.check_16byte_stack_alignment()
         self.Cons.place_input_into(self.dest)
     def to_x86(self):
-        if self.dest.name == "rSP":
-            raise AssertionError("rSP cannot currently be inputed in x86 mode")
-            
         is_not_rax = (self.dest.name != "rAX")
         
         this_str = ""
         if is_not_rax:
             this_str += make_x86("pushq","%rAX") + "\n"
+            this_str += make_x86("subq","$8","%rSP") + "\n"
            
-        this_str += make_x86("callq","input")
+        this_str += make_x86("callq",("input" if platform_check.is_gcc() else "_input"))
             
         if is_not_rax:
             this_str += "\n" + make_x86("movq","%rAX",make_value(self.dest))
+            this_str += "\n" + make_x86("addq","$8","%rSP")
+            this_str += "\n" + make_x86("popq","%rAX")
+            
+        return this_str
+
+class Random(object):
+    def __init__(self,dest,Stack):
+        self.dest = dest
+        self.Stack = Stack
+    def eval(self):
+        self.Stack.check_16byte_stack_alignment()
+        self.dest.set(int_val(random.randint(0,32767)));
+    def to_x86(self):
+        is_not_rax = (self.dest.name != "rAX")
+        
+        this_str = ""
+        if is_not_rax:
+            this_str += make_x86("pushq","%rAX") + "\n"
+            this_str += make_x86("subq","$8","%rSP") + "\n"
+           
+        this_str += make_x86("callq",("random" if platform_check.is_gcc() else "_random"))
+            
+        if is_not_rax:
+            this_str += "\n" + make_x86("movq","%rAX",make_value(self.dest))
+            this_str += "\n" + make_x86("addq","$8","%rSP")
             this_str += "\n" + make_x86("popq","%rAX")
             
         return this_str

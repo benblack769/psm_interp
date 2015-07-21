@@ -1,0 +1,63 @@
+fib:
+	push rBP
+	rBP = rSP
+	rSP -= 16
+	
+	rAX = mem[rBP+16]
+	if rAX == 0 goto zero_case
+	rAX = mem[rBP+16]
+	if rAX == 1 goto one_case
+#else 
+	rSP -= 8
+	rAX = mem[rBP+16]
+	rAX -= 1
+	push rAX
+	call fib
+	rSP += 16
+	mem[rBP-8] = rAX	#fib1 = fib(input-1)
+	
+	rSP -= 8
+	rAX = mem[rBP+16]
+	rAX -= 2
+	push rAX
+	call fib
+	rSP += 16
+	mem[rBP-16] = rAX	#fib2 = fib(input-2)
+	
+	rAX = mem[rBP-16]
+	rBX = mem[rBP-8]
+	rAX += rBX
+	mem[rBP-16] = rAX	#out = fib1 + fib2
+	
+	goto end_fib
+	
+zero_case:
+	mem[rBP-16] = 0
+	goto end_fib
+	
+one_case:
+	mem[rBP-16] = 1
+	
+end_fib:
+	rAX = mem[rBP-16]
+	
+	rSP = rBP
+	rBP = pop
+	return
+	
+main:
+	push rBP
+	rBP = rSP
+	rSP -= 16
+	
+	rDI = in	#count = in
+	
+	rSP -= 8
+	push rDI
+	call fib
+	rSP += 16
+	out rAX
+	
+	rSP = rBP
+	rBP = pop
+	return

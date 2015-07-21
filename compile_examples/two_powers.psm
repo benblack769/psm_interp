@@ -1,0 +1,28 @@
+
+main:
+	push rBP
+	rBP = rSP
+	rSP -= 32
+	rAX = in
+	mem[rBP-8] = rAX
+	mem[rBP-16] = 2		#store two_pow
+	
+pow_loop:
+	rAX = mem[rBP-8]
+	rBX = mem[rBP-16]
+	if rAX < rBX goto exit
+	
+	rAX = mem[rBP-16]
+	out rAX
+	
+	rAX = mem[rBP-16]
+	rAX <<= 1
+	mem[rBP-16] = rAX
+	
+	goto pow_loop
+	
+exit:
+	rSP = rBP
+	rBP = pop
+	return
+	

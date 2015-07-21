@@ -1,0 +1,53 @@
+#equivalent to:
+#sum = 0;
+#count = 1
+#while(count < input):
+#	sum += count
+#	count += 1
+#return count
+
+sum_to:
+	push rBP
+	rBP = rSP
+	rSP -= 16
+	
+	mem[rBP-8] = 1		#cur_num = 0
+	mem[rBP-16] = 0		#sum = 0
+sum_loop:
+	rAX = mem[rBP-8]
+	rBX = mem[rBP+16]
+	if rAX > rBX goto end_sum
+	
+	rAX = mem[rBP-8]
+	rBX = mem[rBP-16]
+	rAX += rBX
+	mem[rBP-16] = rAX	#sum = sum + cur_num
+	
+	rAX = mem[rBP-8]
+	rAX++
+	mem[rBP-8] = rAX
+	
+	goto sum_loop
+end_sum:
+	rAX = mem[rBP-16]
+	
+	rSP = rBP
+	rBP = pop
+	return
+	
+main:
+	push rBP
+	rBP = rSP
+	rSP -= 16
+	
+	rAX = in	#count = in
+	
+	rSP -= 8
+	push rAX
+	call sum_to
+	rSP += 16
+	out rAX
+	
+	rSP = rBP
+	rBP = pop
+	return

@@ -1,66 +1,47 @@
-Mod:
-	push rBP
-	rBP = rSP 
-	rCX = rDI
-	rDX = rSI
-	rBX = 0
-ModLoop:
-	if rCX < rDX goto KillLoop
-	rCX -= rDX
-	rBX++
-	goto ModLoop
-
-KillLoop:
-	rAX = rCX
-	
-	rSP = rBP
-	rBP = pop
-	return
-	
-IsPrime:
+IsNotPrime:
 	push rBP
 	rBP = rSP
-	rAX = 32
-	rSP -= rAX
-	mem[rBP-16] = rDI
-	mem[rBP-8] = rDI
-IsPrimeLoop:
-	rAX = mem[rBP-8]
-	rAX--
-	mem[rBP-8] = rAX
-	rDI = mem[rBP-16]
-	rSI = mem[rBP-8]
-	call Mod
-	if rAX != 0 goto IsPrimeLoop
+	rSP -= 32
 	
-	rAX = mem[rBP-8]
-	rAX--
+	rAX = rDI	#check_num = input
+	rBX = rDI	#factor = input
+IsNotPrimeLoop:
+	rBX--		#factor--
+	
+	rCX = rAX
+	rCX %= rBX	#prime_check = check_num % factor
+	
+	if rCX != 0 goto IsNotPrimeLoop
+#end of IsNotPrimeLoop
+	rBX--
+	rAX = rBX	#if factor is 1 then it is prime and rAX will be zero
 	rSP = rBP
 	rBP = pop
 	return
+	
 main:
 	push rBP
 	rBP = rSP
-	rAX = 32
-	rSP -= rAX
+	rSP -= 32
+	
 	rAX = in
-	mem[rBP-8] = rAX
-	mem[rBP-16] = 2
+	mem[rBP-8] = rAX	#store max_num
+	mem[rBP-16] = 2		#store check_num
 	
 PrimeLoop:
-	rAX = mem[rBP-8]
-	rBX = mem[rBP-16]
+	rAX = mem[rBP-8]	
+	rBX = mem[rBP-16]	 
 	if rBX > rAX goto ExitPrimeLoop
 	
-	rDI = mem[rBP-16]
-	call IsPrime
-	if rAX != 0 goto SkipPrint
+	rDI = mem[rBP-16]	#see if check_num is prime
+	call IsNotPrime
+	if rAX != 0 goto SkipPrint #if rAX is not prime, do not print it
 	
 	rDI = mem[rBP-16]
 	out rDI
 
 SkipPrint:
-	rCX = mem[rBP-16]
+	rCX = mem[rBP-16]	#check_num++
 	rCX++
 	mem[rBP-16] = rCX
 	

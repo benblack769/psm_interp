@@ -8,7 +8,9 @@ class PsmSyntaxError(Exception):
         self.string = String
     def __str__(self):
         return self.string
-        
+#
+#tokenizer helpers
+#
 def remove_comment(line):
     if '#' in line:
         return line[:line.index('#')]
@@ -21,7 +23,7 @@ def split_all(L,char):
         newL += w.split(char)
     return newL
     
-all_ops = ["\n"," ","\t",":","++","--","+=","-=","&=","|=","^=","*=","/=","%=","[","]","<=",">=","==","!=","<",">","=","-","~","+","-"]
+all_ops = ["\n"," ","\t",":","++","--","+=","-=","&=","|=","^=",">>=","<<=","*=","/=","%=","[","]","<=",">=","==","!=","<",">","=","-","~","+","-"]
 def split_operators(S):
     for op in all_ops:
         if op in S:
@@ -53,51 +55,25 @@ def tokenize(line):
         raise PsmSyntaxError('''line intiated incorrectly.
 Expected either no spaces followed by a label followed by a single colon,
 or 4 spaces or a tab followed by an instruction''')
-        
+
+
+#general purpose PsmSyntaxError used in many places
 NO_MATCH = PsmSyntaxError("line does not match any patterns")
 
 def is_word(word):
+    #checks if it is composed of only letters, numbers, and underscores
     return bool(re.match(r"[a-zA-Z0-9_]+$",word))
     
-def parse_reg(Reg,registers):
-    if Reg == "rIP":
-        raise PsmSyntaxError("rIP cannot be used in ordinary instructions!")
-    elif Reg not in registers:
-        raise PsmSyntaxError("invalid register name: " + Reg)
-    else:
-        return registers[Reg]
-        
-def parse_reg_const(tokens,max_size,registers,*args):
-    for tok in args:
-        tokens.insert(0,tok)
-        
-    first = tokens.pop(0)
-    if first == "-" or first == "+":
-        Op = first
-        const = tokens.pop(0)
-        return parse_int(max_size,const,Op)
-    else:
-        Str = first
-        if is_int(Str):
-            return parse_int(max_size,Str)
-        else:
-            return parse_reg(Str,registers)
-        
-def pop_num(L,n):
-    for i in range(n):
-        L.pop(0)
-
 def parse_line(tokens,line_num,registers,label_locs,State,Console,Stack):
     try:
         result = parse_instruc(tokens,line_num,registers,label_locs,State,Console,Stack)
-        #if there are tokens left over that means that there is extra stuff at the end!
+        #if there are tokens left over that means that there is extra stuff at the end which is an error
         if tokens:
             raise PsmSyntaxError("Junk at end of expression")
         return result
     except IndexError:
+        #this means that the instruction is missing tokens
         raise NO_MATCH
-    except KeyError:
-        raise PsmSyntaxError("Bad register name")
         
 def parse_label(tokens,line_num,label_locs):
     label = tokens[0]
@@ -111,6 +87,10 @@ def parse_label(tokens,line_num,label_locs):
         raise PsmSyntaxError("Reserved label")
     else:
         label_locs[label] = line_num
+        
+#
+#helpers for parse_instruction
+#
 
 def is_in_size(max_size,num):
     return num > (1 << (max_size-1)) - 1 or  num < -(1 << (max_size-1))
@@ -147,6 +127,36 @@ def parse_int(max_size,num_str,operator="+"):
     else:
         return Const(num)
         
+def parse_shift_int(tokens):
+    num_str = tokens.pop(0)
+    if num_str == "-":
+        raise PsmSyntaxError("shift bit instructions only take positive numbers")
+    return parse_int(7,num_str)
+
+def parse_reg(Reg,registers):
+    if Reg == "rIP":
+        raise PsmSyntaxError("rIP cannot be used in ordinary instructions!")
+    elif Reg not in registers:
+        raise PsmSyntaxError("invalid register name: " + Reg)
+    else:
+        return registers[Reg]
+        
+def parse_reg_const(tokens,max_size,registers,*args):
+    for tok in args:
+        tokens.insert(0,tok)
+        
+    first = tokens.pop(0)
+    if first == "-" or first == "+":
+        Op = first
+        const = tokens.pop(0)
+        return parse_int(max_size,const,Op)
+    else:
+        Str = first
+        if is_int(Str):
+            return parse_int(max_size,Str)
+        else:
+            return parse_reg(Str,registers)
+         
 def parse_mem_block(tokens,registers):
     mem_loc = tokens[1]
     
@@ -155,11 +165,13 @@ def parse_mem_block(tokens,registers):
             offset = tokens[3]
             if tokens[4] == "]":
                 operator = tokens[2]
-                const = parse_int(8,offset,operator)#todo:check to see if 8 bit offset is max              
-                pop_num(tokens,5)
+                const = parse_int(32,offset,operator)
+                for i in range(5):
+                    tokens.pop(0)
                 return (parse_reg(mem_loc,registers),const)
         elif tokens[2] == "]":
-            pop_num(tokens,3)
+            for i in range(3):
+                tokens.pop(0)
             return (parse_reg(mem_loc,registers),Const(0))
             
     raise NO_MATCH
@@ -189,6 +201,16 @@ def parse_label_ref(tokens,label_locs):
         raise PsmSyntaxError("Bad label")
        
 def parse_instruc(tokens,line_num,registers,label_locs,State,Console,Stack):
+    """
+    Builds and returns the instruction that the line signals, or 
+    raises an exception. It pops symbols off of the front of the 
+    token list and if there is nothing left to pop off it throws an 
+    error which is translated into a PsmSyntaxError by parse_line.
+    Note that parse_something functions pop items off of the token list
+    in a stateful change if they accept "tokens" as an argument.
+    If there are any tokens left after this function returns, that 
+    is also a PsmSyntaxError.
+    """
     def parse_src(tokens):
         return parse_reg_const(tokens,32,registers)
     def parse_dest_reg(Reg):
@@ -213,7 +235,9 @@ def parse_instruc(tokens,line_num,registers,label_locs,State,Console,Stack):
                 else:
                     raise PsmSyntaxError("negation and bitwise not must have the same register on both sides of the '=' sign")
             elif word2 == "in":
-                return Input(parse_dest_reg(first),Console)
+                return Input(parse_dest_reg(first),Console,Stack)
+            elif word2 == "rand":
+                return Random(parse_dest_reg(first),Stack)
             elif word2 == "mem":
                 (mem_loc,offset) = parse_mem_block(tokens,registers)
                 return MemLoad(parse_dest_reg(first),Stack,mem_loc,offset)
@@ -236,14 +260,15 @@ def parse_instruc(tokens,line_num,registers,label_locs,State,Console,Stack):
         elif first_op == "^=":
             return Xor(parse_dest_reg(first),parse_src(tokens))
         elif first_op == "*=":
-            if tokens.pop(0) == "2":
-                return SAL(parse_dest_reg(first))
+            return Mul(parse_dest_reg(first),parse_src(tokens))
         elif first_op == "/=":
-            if tokens.pop(0) == "2":
-                return SAR(parse_dest_reg(first))
+            return Div(parse_dest_reg(first),parse_src(tokens))
         elif first_op == "%=":
-            if tokens.pop(0) == "2":
-                return And1(parse_dest_reg(first))
+            return Rem(parse_dest_reg(first),parse_src(tokens))
+        elif first_op == ">>=":
+            return SAR(parse_dest_reg(first),parse_shift_int(tokens))
+        elif first_op == "<<=":
+            return SAL(parse_dest_reg(first),parse_shift_int(tokens))
     elif first == "push":
         return Push(parse_src(tokens),rSP,Stack)
     elif first == "mem":
@@ -251,7 +276,7 @@ def parse_instruc(tokens,line_num,registers,label_locs,State,Console,Stack):
         if tokens.pop(0) == "=":
             return MemStore(parse_src(tokens),Stack,dest_reg,offset)
     elif first == "out":
-        return Output(parse_src(tokens),Console)
+        return Output(parse_src(tokens),Console,Stack)
     elif first == "goto":
         label = parse_label_ref(tokens,label_locs)
         return GoTo(label,label_locs[label],State)
@@ -270,7 +295,7 @@ def parse_instruc(tokens,line_num,registers,label_locs,State,Console,Stack):
     elif first == "return":
         return Return(rSP,Stack,State)
         
-    
+    #if it has not returned then it has not met any of the matches
     raise NO_MATCH
     
 def parse_all(lines,registers,State,Console,Stack):
@@ -282,6 +307,8 @@ def parse_all(lines,registers,State,Console,Stack):
         print("on line: ",n + 1,".")
         print("syntax error: ",ErrStr,"\n")
         
+    #puts the labels in the file into label_locs
+    #indexing is by the rIP value, not the file line
     for n,l in enumerate(lines):
         try:
             tokens = tokenize(l)
@@ -300,6 +327,7 @@ def parse_all(lines,registers,State,Console,Stack):
     compiled_lines = []
     comp_to_file = dict()
     
+    #parses the instructions
     for n,l in enumerate(lines):
         try:
             tokens = tokenize(l)

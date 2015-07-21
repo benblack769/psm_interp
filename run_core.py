@@ -43,6 +43,10 @@ def to_hex(num):
         hex_str = hex_str + (hex((num >> (n * 4)) & 0xf)[2:])
     return hex_str
     
+#
+#describes a type system which allows instructions to give warnings 
+#if questionable operations happen.
+#
 class Val(object):
     def __init__(self,val):
         self.int = val

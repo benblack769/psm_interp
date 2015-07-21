@@ -14,26 +14,6 @@ main:
 	rSP = rBP
 	rBP = pop
 	return
-#rDI * rSI
-positive_product:
-	push rBP
-	rBP = rSP
-	rSP -= 16
-	
-	rBX = rDI	#increaser = input  1
-	rCX = rSI	#count = input2
-	rAX = 0		#output = 0
-	if rCX <= 0 goto end_prod
-prod_loop:
-	#loop count times
-	rCX--
-	rAX += rBX	#output += input
-	if rCX > 0 goto prod_loop
-end_prod:
-	rSP = rBP
-	rBP = pop
-	return
-	
 #rDI ^ rSI
 power:
 	push rBP
@@ -41,7 +21,6 @@ power:
 	rSP -= 16
 	
 	mem[rBP-8] = rDI
-	mem[rBP-16] = rSI
 	
 	if rSI == 0 goto zero_case
 	rBX = rSI
@@ -50,21 +29,19 @@ power:
 #even_case
 	rSI /= 2
 	call power
-	rDI = rAX
-	rSI = rAX
-	call positive_product
+	
+	rAX *= rAX		#return (output of previous) ^ 2
 	goto exit_pow
 odd_case:
 	#rAX = power(x , (n-1))
 	rSI -= 1
 	call power
-	#rAX = x * pow_result
-	rDI = mem[rBP-8]
-	rSI = rAX
-	call positive_product
+	
+	rBX = mem[rBP-8]
+	rAX *= rBX		#return x * pow_result
 	goto exit_pow
 zero_case:
-	rAX = 1
+	rAX = 1		#output = 1
 exit_pow:
 	rSP = rBP
 	rBP = pop

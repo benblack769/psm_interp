@@ -1,0 +1,40 @@
+#equivalent to:
+#sum = 0;
+#count = 1
+#while(count < input):
+#	sum += count
+#	count += 1
+#return count
+sum_to:
+	push rBP
+	rBP = rSP
+	rSP -= 16
+	
+	rAX = 1		#cur_num = 0
+	rCX = 0		#sum = 0
+sum_loop:
+	if rAX > rDI goto end_sum
+	
+	rCX += rAX
+	
+	rAX++		
+	goto sum_loop
+end_sum:
+	rAX = rCX
+	
+	rSP = rBP
+	rBP = pop
+	return
+	
+main:
+	push rBP
+	rBP = rSP
+	rSP -= 16
+	
+	rDI = in	#count = in
+	call sum_to
+	out rAX
+	
+	rSP = rBP
+	rBP = pop
+	return

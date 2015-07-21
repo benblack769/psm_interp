@@ -144,7 +144,63 @@ incContinue:
 	rAX += -12
 	rAX += -0
 	out rAX
-	rSP += 32
+#div and mul tests
+	rAX = 123123123123123123
+	rBX = 321321321321321
+	rCX = rAX
+	rCX /= rBX
+	out rCX
+	rCX *= rBX
+	out rCX
+	rAX = -rAX
+	rCX *= rCX
+	out rCX
+	rBX = -rBX
+	out rBX
+	rCX = rAX 
+	out rCX
+	rCX %= rBX
+	out rCX
+	rCX = rBX
+	rAX = -123123
+	rBX %= rAX
+	out rBX
+	rAX = 123
+	rBX = 10
+	
+	rCX = rAX
+	rCX /= rBX
+	out rCX 
+	
+	rAX = - rAX
+	rCX = rAX
+	rCX /= rBX
+	out rCX
+	
+	rBX = -rBX
+	rCX = rAX
+	rCX /= rBX
+	out rCX 
+	
+	rAX = -rAX
+	rCX = rAX
+	rCX /= rBX
+	out rCX 
+#shift constant tests
+	rAX = -10000000
+	rAX <<= 5
+	out rAX
+	rAX >>= 10
+	out rAX
+#rand tests
+	rBX = 10
+	rCX = 11
+	rAX = rand
+	out rAX
+	rCX = rand
+	out rCX
+	out rBX
+	
 	rSP = rBP
 	rBP = pop
 	return

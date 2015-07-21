@@ -32,7 +32,7 @@ class TextState(ProgramState):
 
     
 regs = {name:TextRegister(name) for name in reg_name_list}
-mem = TextMemory()
+mem = TextMemory(regs["rSP"])
 state = TextState(regs["rBP"],regs["rIP"])
 
 cons = TextConsole()

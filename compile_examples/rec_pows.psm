@@ -1,0 +1,94 @@
+#computes (input 1) ^ (input 2)
+main:
+	push rBP
+	rBP = rSP
+	rSP -= 32
+	
+	mem[rBP-8] = 0		#input 1
+	mem[rBP-16] = 0		#input 2
+	mem[rBP-24] = 0		#output
+	
+	rAX = in
+	mem[rBP-8] = rAX
+	rAX = in
+	mem[rBP-16] = rAX	
+	
+	rAX = mem[rBP-8]	#give argument 1 to power
+	push rAX
+	rAX = mem[rBP-16]	#give argument 2 to power
+	push rAX
+	
+	call power
+	rSP += 16
+	
+	mem[rBP-24] = rAX	#stores output
+	
+	rAX = mem[rBP-24]
+	out rAX
+	
+	rAX = mem[rBP-24]	#returns output
+	rSP = rBP
+	rBP = pop
+	return
+
+#x ^ y 
+power:
+	push rBP
+	rBP = rSP
+	rSP -= 16
+	
+	rAX = mem[rBP+16]	
+	if rAX == 0 goto zero_case	#if y == 0 return 1
+	
+	rAX = mem[rBP+16]
+	rAX %= 2
+	if rAX == 1 goto odd_case	#if y % 2 == 0 
+	
+	#else goto even_case
+#even_case
+	#return = (x ^ (y/2)) ^ 2
+	rAX = mem[rBP+16]
+	rAX /= 2
+	mem[rBP-8] = rAX	#temp = y / 2
+	
+	rAX = mem[rBP+24]	
+	push rAX
+	rAX = mem[rBP-8]	
+	push rAX
+	call power
+	rSP += 16
+	mem[rBP-8] = rAX	#temp = x ^ (y/2)
+	
+	rAX = mem[rBP-8]
+	rBX = mem[rBP-8]
+	rAX *= rBX
+	mem[rBP-16] = rAX	#return = temp * temp
+	
+	goto exit_pow
+odd_case:
+	#return = (x ^ (y-1)) * x
+	rAX = mem[rBP+16]
+	rAX -= 1
+	mem[rBP-8] = rAX	#temp = y - 1
+	
+	rAX = mem[rBP+24]	
+	push rAX
+	rAX = mem[rBP-8]	
+	push rAX
+	call power
+	rSP += 16
+	mem[rBP-8] = rAX	#temp = x ^ (y-1)
+	
+	rAX = mem[rBP+24]
+	rBX = mem[rBP-8]
+	rAX *= rBX
+	mem[rBP-16] = rAX	#output = x * pow_result
+	
+	goto exit_pow
+zero_case:
+	mem[rBP-16] = 1		#return = 1
+exit_pow:
+	rAX = mem[rBP-16]	#puts return value into rAX
+	rSP = rBP
+	rBP = pop
+	return

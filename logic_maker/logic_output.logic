@@ -1,0 +1,5 @@
+a = input 
+b = input 
+c = not b
+d = or a c
+e = out d

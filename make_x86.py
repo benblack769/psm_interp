@@ -4,12 +4,14 @@ compiled with gcc and lib.s.
 """
 from interp_core import *
 import psm_parser
+import subprocess
 from platform_check import *
 
 regs = {name:Register(name)for name in reg_name_list}
 label_locs,comp_lines,to_fnum = psm_parser.parse_all(flines,regs,ProgramState(regs["rBP"],regs["rIP"]),object(),Memory(regs["rSP"]))
 
-assembly_filename = filename[:filename.index(".")] + ".s"
+reduced_filename = filename[:filename.index(".")]
+assembly_filename = reduced_filename + ".s"
 
 file = open(assembly_filename,"w")
 
@@ -29,3 +31,5 @@ for n,line in enumerate(comp_lines):
     file.write(line.to_x86() + "#" + flines[to_fnum[n + start_rIP]].strip() + "\n")
     
 file.close()
+subprocess.call("gcc -S lib.c")
+subprocess.call("gcc -o " + reduced_filename + " " + assembly_filename + " lib.s")

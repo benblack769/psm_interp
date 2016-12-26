@@ -32,7 +32,7 @@ def init_all(regs,mem,state,label_locs,expressions,to_fnum):
 
 #main script that executes on all interfaces
 this_own_filename,filename = sys.argv
-if filename[filename.index("."):] != ".psm":
+if filename[filename.rindex("."):] != ".psm":
     print("Interpreted file must be a .psm file")
     sys.exit(0)
     

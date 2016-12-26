@@ -1,19 +1,19 @@
 COMMANDS:
 	INTERPRETING .psm:
 		PATTERN: python3.4 [interpreter/compiler] [filename.psm]
-		
+
 		INTERPRETERS/COMPILERS:
-			GUI_interp.py 
+			GUI_interp.py
 				Brings up a GUI that displays errors and warnings
 				on the command line.
 			text_interp.py
-				A text based debugger that has much of the same 
+				A text based debugger that has much of the same
 				functionality as the GUI
 			make_x86.py
-				A compiler that turns the "filename.psm" file into a 
+				A compiler that turns the "filename.psm" file into a
 				"filename.s" which can be compiled with lib.s on gcc to
 				produces a native executable that runs on the hardware.
-	
+
 	COMPILING/RUNNING x86:
 		GENERATE lib.s:
 			gcc -S lib.c
@@ -21,7 +21,7 @@ COMMANDS:
 			gcc -o filename.out filename.s lib.s
 		RUN filename.out:
 			./filename.out
-	
+
 FILES:
 
 	GUI_interp.py: contains the tkinter interface
@@ -36,19 +36,21 @@ FILES:
 
 LANGUAGE:
 
+	Design due to [Jim Fix](http://people.reed.edu/~jimfix/).
+
 	Registers: rAX, rBX, rCX, rDX, rSI, rDI, rBP, rSP
-	
+
 	These are all 64 bit registers, which means that any overflow will be truncated.
-	
+
 	In the below rS means source and rD means destination
 	rS can be a register or a constant, rD can only be a register
-	constants which can fit into 32 bits except for register assignment which 
+	constants which can fit into 32 bits except for register assignment which
 	allows for 64 bit constants.
 
 	Instructions:
 		All instructions must have exactly 4 spaces or a tab
 		behind it.
-		
+
 		push rS         "push"
 		rD = pop        "pop"
 
@@ -69,7 +71,7 @@ LANGUAGE:
 		rD *= rS		"integer multiply"
 		rD /= rS		"integer divide"
 		rD %= rS        "integer modulus"
-		
+
 		c has to a constant less than 64
 		rD >>= c		"shift arthmatic right"
 		rD <<= c		"shift arthmatic left"
@@ -87,8 +89,8 @@ LANGUAGE:
 
 		call LABEL   "subroutine call"
 		return       "return from subroutine"
-		
+
 	Label creation:
 		Labels cannot have any spacing before them.
-		
+
 		LABEL:			"create label"

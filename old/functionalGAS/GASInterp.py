@@ -2,6 +2,7 @@ import array
 from helper import *
 import numpy
 import sys
+
 def main():
     filename = input("Type File name: ")
     file = open(filename)
